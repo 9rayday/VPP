@@ -1,10 +1,39 @@
 function fmt(n)  { return Math.round(n).toLocaleString('ko-KR'); }
 function fmtM(n) { return (n / 1000000).toFixed(1); }
 
+var DASH_IDS = [
+  'sDailyGen','sDailyBid','sDailyRT','sEffCap',
+  'cA_total','cA_annual','cA_da','cA_rt','cA_cp','cA_rec','cA_vpp',
+  'cB_total','cB_annual','cB_da','cB_exp','cB_cp','cB_rec','cB_vpp',
+  'cC_total','cC_annual','cC_da','cC_rt','cC_cp','cC_rec','cC_pen','cC_vpp',
+  'cD_total','cD_annual','cD_ppa','cD_fee','cD_net','cD_diff',
+  'aA','aB','aC','aD','aDiff'
+];
+
+function resetOutputs() {
+  DASH_IDS.forEach(function(id) { document.getElementById(id).textContent = '—'; });
+  document.getElementById('twentyGrid').innerHTML = '';
+  window._annMap = null;
+}
+
 function calc() {
-  var CAP    = +document.getElementById('iCAP').value || 1000;
-  var GEN    = +document.getElementById('iGEN').value || 3.4;
-  var BID    = +document.getElementById('iBID').value || 3.2;
+  var capRaw = document.getElementById('iCAP').value;
+  var genRaw = document.getElementById('iGEN').value;
+  var bidRaw = document.getElementById('iBID').value;
+
+  if (capRaw === '' || genRaw === '' || bidRaw === '') {
+    resetOutputs();
+    return;
+  }
+
+  var CAP = +capRaw;
+  var GEN = +genRaw;
+  var BID = +bidRaw;
+
+  if (!CAP || !GEN || !BID) {
+    resetOutputs();
+    return;
+  }
   var penPct = +document.getElementById('iPEN').value;
   document.getElementById('vPEN').textContent = penPct.toFixed(1) + '%';
 
