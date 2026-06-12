@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPP 수익 시뮬레이터</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <svg class="solar-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g class="solar-rays">
+        <line x1="22" y1="2"  x2="22" y2="8"  stroke="#666" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="22" y1="36" x2="22" y2="42" stroke="#666" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="2"  y1="22" x2="8"  y2="22" stroke="#666" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="36" y1="22" x2="42" y2="22" stroke="#666" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="7"  y1="7"  x2="11.5" y2="11.5" stroke="#555" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="32.5" y1="32.5" x2="37" y2="37" stroke="#555" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="37" y1="7"  x2="32.5" y2="11.5" stroke="#555" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="11.5" y1="32.5" x2="7" y2="37" stroke="#555" stroke-width="1.4" stroke-linecap="round"/>
+      </g>
+      <circle cx="22" cy="22" r="9" fill="#666" stroke="#666" stroke-width="1.4"/>
+    </svg>
+    <div>
+      <div class="header-title">VPP 수익 시뮬레이터</div>
+    </div>
+  </div>
+  <span class="badge">추정치 기반</span>
+</div>
+
+<div class="wrap">
+
+  <!-- ① 이용 조건 -->
+  <div class="conditions-block">
+    <div class="conditions-row">
+
+      <!-- 섹션 1: 기본 가정 -->
+      <div class="cond-section">
+        <div class="section-eyebrow">기본 가정</div>
+        <div class="cond-section-body">
+          <div class="cond-item">
+            <div class="cond-label"><span>설비용량</span><span class="unit">kW</span></div>
+            <input class="num-input" type="number" id="iCAP" value="1000" min="100" max="20000" step="100" oninput="calc()">
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>일 평균 발전 시간</span><span class="unit">h / 일</span></div>
+            <input class="num-input" type="number" id="iGEN" value="3.4" min="0.5" max="8" step="0.1" oninput="calc()">
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>하루전 입찰 시간</span><span class="unit">h / 일</span></div>
+            <input class="num-input" type="number" id="iBID" value="3.2" min="0.5" max="8" step="0.1" oninput="calc()">
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>VPP 수수료율</span><span class="unit">% (CASE A·B·C)</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="0" max="10" step="0.1" value="8" id="sVPP" oninput="calc()">
+              <span class="slider-val" id="vVPP">8.0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cond-divider"></div>
+
+      <!-- 섹션 2: 단가 조정 -->
+      <div class="cond-section">
+        <div class="section-eyebrow">단가 조정</div>
+        <div class="cond-section-body">
+          <div class="cond-item">
+            <div class="cond-label"><span>DA SMP</span><span class="unit">원 / kWh</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="50" max="180" step="1" value="110" id="sDA" oninput="calc()">
+              <span class="slider-val" id="vDA">110원</span>
+            </div>
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>RT SMP</span><span class="unit">원 / kWh</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="50" max="180" step="1" value="100" id="sRT" oninput="calc()">
+              <span class="slider-val" id="vRT">100원</span>
+            </div>
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>REC 가격</span><span class="unit">원 / kWh</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="30" max="120" step="1" value="70" id="sREC" oninput="calc()">
+              <span class="slider-val" id="vREC">70원</span>
+            </div>
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>용량요금 단가</span><span class="unit">원 / kWh</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="5" max="15" step="0.5" value="9" id="sCP" oninput="calc()">
+              <span class="slider-val" id="vCP">9.0원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cond-divider"></div>
+
+      <!-- 섹션 3: 보정 계수 + PPA 단가 -->
+      <div class="cond-section">
+        <div class="section-eyebrow">보정 계수</div>
+        <div class="cond-section-body">
+          <div class="cond-item">
+            <div class="cond-label"><span>출력제어 비율</span><span class="unit">% (CASE B)</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="10" max="80" step="5" value="40" id="sCUT" oninput="calc()">
+              <span class="slider-val" id="vCUT">40%</span>
+            </div>
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>과잉발전도</span><span class="unit">% (CASE C)</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="0" max="30" step="0.5" value="5" id="iPEN" oninput="calc()">
+              <span class="slider-val" id="vPEN">5.0%</span>
+            </div>
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>CP 실효용량 비율</span><span class="unit">%</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="5" max="30" step="0.5" value="13.9" id="sEFF" oninput="calc()">
+              <span class="slider-val" id="vEFF">13.9%</span>
+            </div>
+          </div>
+          <div class="cond-item">
+            <div class="cond-label"><span>PPA 단가</span><span class="unit">원 / kWh (CASE D)</span></div>
+            <div class="slider-wrap">
+              <input type="range" min="80" max="200" step="1" value="175" id="sPPA" oninput="calc()">
+              <span class="slider-val" id="vPPA">175원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ② 요약 지표 -->
+  <div class="summary-bar">
+    <div class="summary-card">
+      <div class="summary-label">실 발전량</div>
+      <div class="summary-val" id="sDailyGen">—</div>
+      <div class="summary-unit">kWh / 일</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">DA 실 발전량</div>
+      <div class="summary-val" id="sDailyBid">—</div>
+      <div class="summary-unit">kWh / 일</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">RT 추가발전량</div>
+      <div class="summary-val" id="sDailyRT">—</div>
+      <div class="summary-unit">kWh / 일</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">CP 실효용량</div>
+      <div class="summary-val" id="sEffCap">—</div>
+      <div class="summary-unit">kW</div>
+    </div>
+  </div>
+
+  <!-- ③ CASE 카드 -->
+  <div class="cases-grid">
+
+    <div class="case-card">
+      <div class="case-badge">CASE A</div>
+      <div class="case-title">예측 성공 · 정상 운영</div>
+      <div class="case-desc">최적 시나리오 → 예측 일치, 출력제어·급전지시 없음</div>
+      <div class="case-total-area">
+        <div class="case-total" id="cA_total">—</div>
+        <div class="case-total-label">원 / 일</div>
+      </div>
+      <div class="case-annual">
+        <span>연간 수익 (×365)</span>
+        <span class="case-annual-val" id="cA_annual">—</span>
+      </div>
+      <div class="case-rows">
+        <div class="case-row"><span class="case-row-label">DA 전력도매 수익</span><span class="case-row-val" id="cA_da">—</span></div>
+        <div class="case-row"><span class="case-row-label">RT 전력도매 수익</span><span class="case-row-val" id="cA_rt">—</span></div>
+        <div class="case-row"><span class="case-row-label">용량요금</span><span class="case-row-val" id="cA_cp">—</span></div>
+        <div class="case-row"><span class="case-row-label">REC 정산 수익</span><span class="case-row-val" id="cA_rec">—</span></div>
+        <div class="case-row"><span class="case-row-label">VPP 수수료</span><span class="case-row-val neg" id="cA_vpp">—</span></div>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-badge">CASE B</div>
+      <div class="case-title">출력제어 발생</div>
+      <div class="case-desc">전력 과잉공급으로 출력제어 명령 수령 → 기대이익손실 수익 보전</div>
+      <div class="case-total-area">
+        <div class="case-total" id="cB_total">—</div>
+        <div class="case-total-label">원 / 일</div>
+      </div>
+      <div class="case-annual">
+        <span>연간 수익 (×365)</span>
+        <span class="case-annual-val" id="cB_annual">—</span>
+      </div>
+      <div class="case-rows">
+        <div class="case-row"><span class="case-row-label">DA 전력도매 수익</span><span class="case-row-val" id="cB_da">—</span></div>
+        <div class="case-row"><span class="case-row-label">RT 전력도매 수익</span><span class="case-row-val zero">0원</span></div>
+        <div class="case-row"><span class="case-row-label">기대이익손실 수익</span><span class="case-row-val" id="cB_exp">—</span></div>
+        <div class="case-row"><span class="case-row-label">용량요금</span><span class="case-row-val" id="cB_cp">—</span></div>
+        <div class="case-row"><span class="case-row-label">REC 정산 수익</span><span class="case-row-val" id="cB_rec">—</span></div>
+        <div class="case-row"><span class="case-row-label">VPP 수수료</span><span class="case-row-val neg" id="cB_vpp">—</span></div>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-badge">CASE C</div>
+      <div class="case-title">과잉발전 · 패널티</div>
+      <div class="case-desc">실시간 발전량이 급전지시보다 이하 초과 → 이밸런스 패널티 부과</div>
+      <div class="case-total-area">
+        <div class="case-total" id="cC_total">—</div>
+        <div class="case-total-label">원 / 일</div>
+      </div>
+      <div class="case-annual">
+        <span>연간 수익 (×365)</span>
+        <span class="case-annual-val" id="cC_annual">—</span>
+      </div>
+      <div class="case-rows">
+        <div class="case-row"><span class="case-row-label">DA 전력도매 수익</span><span class="case-row-val" id="cC_da">—</span></div>
+        <div class="case-row"><span class="case-row-label">RT 전력도매 수익</span><span class="case-row-val" id="cC_rt">—</span></div>
+        <div class="case-row"><span class="case-row-label">용량요금</span><span class="case-row-val" id="cC_cp">—</span></div>
+        <div class="case-row"><span class="case-row-label">REC 정산 수익</span><span class="case-row-val" id="cC_rec">—</span></div>
+        <div class="case-row"><span class="case-row-label">이밸런스 패널티</span><span class="case-row-val neg" id="cC_pen">—</span></div>
+        <div class="case-row"><span class="case-row-label">VPP 수수료</span><span class="case-row-val neg" id="cC_vpp">—</span></div>
+      </div>
+    </div>
+
+    <div class="case-card" style="border-color:rgba(74,222,128,0.3);">
+      <div class="case-badge" style="background:rgba(74,222,128,0.12);color:#4ade80;border-color:rgba(74,222,128,0.3);">CASE D</div>
+      <div class="case-title">PPA 계약 수익</div>
+      <div class="case-desc">발전 사업자 PPA 직계약 → 판매수익 - 거래수수료</div>
+      <div class="case-total-area" style="background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.2);">
+        <div class="case-total" style="color:#4ade80;" id="cD_total">—</div>
+        <div class="case-total-label">원 / 일</div>
+      </div>
+      <div class="case-annual">
+        <span>연간 수익 (×365)</span>
+        <span class="case-annual-val" id="cD_annual">—</span>
+      </div>
+      <div class="case-rows">
+        <div class="case-row"><span class="case-row-label">PPA 판매 수익</span><span class="case-row-val" id="cD_ppa">—</span></div>
+        <div class="case-row"><span class="case-row-label">거래수수료</span><span class="case-row-val neg" id="cD_fee">—</span></div>
+        <div style="border-top:0.5px solid #333;margin:6px 0"></div>
+        <div class="case-row"><span class="case-row-label" style="color:#ccc">PPA 순수익</span><span class="case-row-val" id="cD_net">—</span></div>
+        <div class="case-row"><span class="case-row-label" style="color:#aaa">vs CASE A 차익</span><span class="case-row-val" id="cD_diff">—</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ④ 20년 수익 요약 -->
+  <div class="annual-block">
+    <div class="block-eyebrow">CASE별 1년차 수익 요약</div>
+    <div class="annual-grid">
+      <div class="annual-card">
+        <div class="annual-label">CASE A — 최적</div>
+        <div class="annual-val" id="aA">—</div>
+        <div class="annual-unit">백만원 / 연</div>
+      </div>
+      <div class="annual-card">
+        <div class="annual-label">CASE B — 출력제어</div>
+        <div class="annual-val" id="aB">—</div>
+        <div class="annual-unit">백만원 / 연</div>
+      </div>
+      <div class="annual-card">
+        <div class="annual-label">CASE C — 패널티</div>
+        <div class="annual-val" id="aC">—</div>
+        <div class="annual-unit">백만원 / 연</div>
+      </div>
+      <div class="annual-card">
+        <div class="annual-label">CASE D — PPA</div>
+        <div class="annual-val" id="aD">—</div>
+        <div class="annual-unit">백만원 / 연</div>
+      </div>
+      <div class="annual-card">
+        <div class="annual-label">A vs D 차익 (연간)</div>
+        <div class="annual-val" id="aDiff">—</div>
+        <div class="annual-unit">백만원 / 연</div>
+      </div>
+    </div>
+
+    <div class="twenty-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>20년 수익 추이 (연 효율 −0.5% 적용)</span>
+      <select class="num-input" id="twentyCase" onchange="renderTwenty()" style="width:auto;padding:3px 8px;font-size:11px;">
+        <option value="A">CASE A — 최적</option>
+        <option value="B">CASE B — 출력제어</option>
+        <option value="C">CASE C — 패널티</option>
+        <option value="D">CASE D — PPA</option>
+      </select>
+    </div>
+    <div class="twenty-grid" id="twentyGrid"></div>
+  </div>
+
+  <!-- ⑤ 수식 -->
+  <div class="formula-block">
+    <div class="formula-item">DA 전력도매 수익 = <span>DA 입찰량(kWh) × DA SMP</span></div>
+    <div class="formula-item">RT 전력도매 수익 = <span>(실발전량 − DA 입찰량)(kWh) × RT SMP</span></div>
+    <div class="formula-item">용량요금 = <span>실효용량(kW) × 단가 × 발전 시간</span></div>
+    <div class="formula-item">REC 정산 수익 = <span>실발전량(kWh) × REC 단가</span></div>
+    <div class="formula-item">기대이익손실 수익 = <span>출력제어량(kWh) × DA SMP × 85%</span></div>
+    <div class="formula-item">이밸런스 패널티 = <span>과잉발전량(kWh) × RT SMP × 20%</span></div>
+    <div class="formula-item">PPA 사용량 요금 = <span>실발전량(kWh) × PPA 단가</span></div>
+    <div class="formula-item">거래수수료 = <span>실발전량(kWh) × 0.1193원</span></div>
+  </div>
+
+</div>
+
+<script src="simulator.js"></script>
+</body>
+</html>
